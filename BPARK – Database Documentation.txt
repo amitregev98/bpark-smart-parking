@@ -1,0 +1,111 @@
+**מסמך הסבר על בסיס הנתונים - bpark**
+
+**מטרת המסמך:**
+המסמך נועד לתאר את מבנה בסיס הנתונים bpark שנבנה מראש לצורך ביצוע בדיקות מערכת. בסיס נתונים זה כולל את כל הטבלאות והנתונים המקדימים הדרושים לבדיקה תקינה של המערכת.
+
+**מידע כללי:**
+
+* שם הסכמה: `bpark`
+* פורמט הייצוא: SQL Self-Contained File (`G17_Assignment3_DB.sql`)
+* נוצר באמצעות MySQL Workbench
+* בעת הפעלת המערכת דרך Eclipse, המערכת יודעת ליצור את הסכמה בשם bpark ואת הטבלאות, לאתחל את נתוני ברירת המחדל (100 חניות, 2 עובדים) במידה והם אינם קיימים.
+* * כדי שיתחבר ל- Eclipse צריך להגדיר את זה באופן הבא שם משתמש: root . ו- סיסמא :Aa123456
+
+---
+----------------------------
+רשימת טבלאות ותיאור:
+----------------------------
+
+1. subscriber - טבלת מנויים
+   PK: SubscriberID
+   עמודות:
+     - SubscriberID (VARCHAR(45))
+     - UserName (VARCHAR(45))
+     - PhoneNumber (VARCHAR(45))
+     - Email (VARCHAR(45))
+
+2. reservation - הזמנות חנייה
+   PK: ReservationID
+   FK: SubscriberID -> subscriber(SubscriberID)
+       SpotID -> parkingspot(SpotID)
+   עמודות:
+     - ReservationID (INT)
+     - SubscriberID (VARCHAR(45))
+     - SpotID (INT)
+     - StartTime (DATETIME)
+     - EndTime (DATETIME)
+
+3. parkinghistory - היסטוריית חנייה
+   PK: HistoryID
+   FK: subscriber -> subscriber(SubscriberID)
+       SpotID -> parkingspot(SpotID)
+   עמודות:
+     - HistoryID (INT)
+     - subscriber (VARCHAR(45))
+     - SpotID (INT)
+     - resID (INT)
+     - EntryTime (DATETIME)
+     - ExitTime (DATETIME)
+     - Late (TINYINT)
+     - totalTimeParking (BIGINT)
+     - Extensions (TINYINT)
+     - ShowedUp (TINYINT)
+     - LateEmailSent (TINYINT)
+     - TimeToPark (INT)
+
+4. parkingspot - מקומות חנייה
+   PK: SpotID
+   עמודות:
+     - SpotID (INT)
+     - InUse (TINYINT)
+
+5. worker - טבלת עובדים
+   PK: WorkerID
+   עמודות:
+     - WorkerID (VARCHAR(45))
+     - Type (TINYINT)  // 0=Usher, 1=Manager
+     - Name (VARCHAR(45))
+
+6. parkingreport - דוח חודשי כללי
+   PK: DateOfReport
+   עמודות:
+     - DateOfReport (DATETIME)
+     - Report_data (BLOB)
+
+7. subscriberreport - דוח מנוי חודשי
+   PK: SubscriberID + DateOfReport
+   עמודות:
+     - SubscriberID (VARCHAR(45))
+     - DateOfReport (VARCHAR(45))
+     - Report_img (BLOB)
+
+8. tagreader - זיהוי תג מנוי
+   PK: TagReaderID
+   FK: SubscriberID -> subscriber(SubscriberID)
+   עמודות:
+     - TagReaderID (INT)
+     - SubscriberID (VARCHAR(45))
+
+----------------------------
+נתונים קיימים מראש:
+----------------------------
+- 100 מקומות חניה (SpotID = 0 עד 99), InUse = 0
+- עובד Usher: WorkerID = 0000, Type = 0
+- עובד Manager: WorkerID = 1111, Type = 1
+
+----------------------------
+הערות להפעלה:
+----------------------------
+- נשמח שלפני ההפעלה תמחקו את הסכמה, והמערכת תיצור לכם בצורה אוטומטים ובהתאמה לדרישות המערכת ובכך תמנע שגיאות של מלל לא נכון או לחילופין ערכים מסוגים שונים
+- לצורך בדיקות ניתן לשחזר את כל בסיס הנתונים דרך הקובץ G17_Assignment3_DB.sql ב-MySQL Workbench.
+
+----------------------------
+הערות כלליות :
+----------------------------
+- בטבלת ההסטוריה parkinghistory ישנם כמה דברים שנשמח להבהיר לכם לפני השימוש :
+ 1. ישנים שני עמודות שדומות בשמות שלהם אך עושות וגורמות לפעולות שונות. 
+     1.1 - Late מייצגת עמודה של איחור בכניסה של הרכב , כניסה שבוצעה ע"י הזמנה מראש, עמודה זאת חיונית לנתונים של הדוחות החנייה, 
+             כי עד הכניסה שלו החנייה שמורה עד 15 שעה ואם הוא נכנס לאחר 12 דק זה אומר שהחנייה הייתה תפוסה 12 דקות, דברים שחשובים לציין בדוחות שלנו.
+     1.2 - LateEmailSent (TINYINT) איחור זה מסמן איחור בהוצאה של הרכב, אם לקוח שחונה מאחר אזי הוא מקבל מייל ישיר אליו למייל שציין בהרשמה, ובטבלה זה מתעדכן ל- 1. 
+             גם עשינו כאשר עוברים 4 שעות מהזמן שהוא התחיל לאחר, אנחנו שולחים לו מייל מסודר ואומרים לו שחרגת ב- 4 שעות והוצאנו לך את הרכב מהחנייה.
+ 2. HistoryID - מייצג גם PK וגם מייצג את קוד החנייה עבור לקוח שחונה.
